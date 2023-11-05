@@ -1,0 +1,30 @@
+{
+	"name": "Santander",
+	"accounts": {
+		"11874348256114216576104617": {
+			"first_name": "Anna",
+			"last_name": "Nowak",
+			"balance": 0
+		},
+		"41511150065582158833075274": {
+			"first_name": "Jan",
+			"last_name": "Kowalski",
+			"balance": 1000.49
+		},
+		"51956445405539334529285918": {
+			"first_name": "Jan",
+			"last_name": "Paweł",
+			"balance": 21.37
+		},
+		"64278787073145255302999030": {
+			"first_name": "Kanye",
+			"last_name": "West",
+			"balance": 420000000.01
+		},
+		"84754123674490971663043197": {
+			"first_name": "Taylor",
+			"last_name": "Swift",
+			"balance": 1000000000.99
+		}	
+	}
+}
