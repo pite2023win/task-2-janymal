@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
-# use thread or multiprocessing or asyncio
-
 # I couldn't find a good use for async
-# Using it for file loading makes code a spaghetti
 # import asyncio
 
 from argparse import ArgumentParser
@@ -115,9 +112,10 @@ class Bank:
             if account_number not in self._accounts.keys():
                 is_number_taken = False
         self._accounts[account_number] = account
-        self._logger.info("Account with {number} number crated".format(number=account_number))
+        self._logger.info(
+            "Account with {number} number crated".format(number=account_number)
+        )
         return account_number
-
 
     def transfer_money(self, sender_number: str, recipient_number: str, amount: float):
         if sender_number not in self._accounts.keys():
@@ -153,7 +151,9 @@ def demo():
     second_bank.get_account(abc_xyz_account).input(420.01)
     second_bank.get_account(abc_xyz_account).withdraw(20.01)
     second_bank.log_all_accounts()
-    demo_bank.transfer_money("51956445405539334529285918", "64278787073145255302999030", 21.37)
+    demo_bank.transfer_money(
+        "51956445405539334529285918", "64278787073145255302999030", 21.37
+    )
     demo_bank.log_all_accounts()
     demo_bank.to_file("demo_output1.json")
     second_bank.to_file("demo_output2.json")
