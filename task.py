@@ -84,7 +84,9 @@ class Bank:
     async def from_dict(cls, dictionary):
         accounts = {}
         tasks = [
-            asyncio.create_task(cls._load_item(key, dictionary["accounts"][key], accounts))
+            asyncio.create_task(
+                cls._load_item(key, dictionary["accounts"][key], accounts)
+            )
             for key in dictionary["accounts"].keys()
         ]
         await asyncio.gather(*tasks)
