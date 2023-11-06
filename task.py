@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-# show a lot of usecases - show many times that it works
 # use thread or multiprocessing or asyncio
 
 # I couldn't find a good use for async
@@ -128,10 +127,12 @@ class Bank:
         self._accounts[sender_number].withdraw(amount)
         self._accounts[recipient_number].input(amount)
 
-    def log_all_accounts(self):
+    def log_all(self):
+        name_message = "Name of the bank: {name}"
+        self._logger.info(name_message.format(name=self._name))
         for key in self._accounts.keys():
-            message = "Getting account of number: {number}"
-            self._logger.info(message.format(number=key))
+            account_message = "Getting account of number: {number}"
+            self._logger.info(account_message.format(number=key))
             self._accounts[key].log_info()
 
     def get_account(self, number: str):
@@ -140,6 +141,10 @@ class Bank:
 
 def demo():
     logging.basicConfig(level=logging.DEBUG)
+    try:
+        demo_bank = Bank.from_file("demo_wrong.json")
+    except Exception as e:
+        logging.error(e)
     demo_bank = Bank.from_file("demo.json")
     second_bank = Bank("Pekao")
     john_doe_account = second_bank.create_account("John", "Doe")
@@ -172,9 +177,13 @@ def interactive():
             elif line[0] in ["w", "withdraw"]:
                 check_bank_instance()
                 bank.get_account(line[1]).withdraw(float(line[2]))
+            elif line[0] in ["t", "transfer"]:
+                check_bank_instance()
+                bank.transfer_money(line[1], line[2], float(line[3]))
             elif line[0] in ["n", "new"]:
                 bank = Bank(line[1])
             elif line[0] in ["c", "create"]:
+                check_bank_instance()
                 bank.create_account(line[1], line[2])
             elif line[0] in ["l", "load"]:
                 bank = Bank.from_file(line[1])
@@ -183,10 +192,11 @@ def interactive():
                 bank.to_file(line[1])
             elif line[0] in ["p", "print"]:
                 check_bank_instance()
-                bank.log_all_accounts()
+                bank.log_all()
             elif line[0] in ["g", "generate"]:
-                print(Account.generate_number())
-            elif line[0] in ["q", "exit", "quit"]:
+                message = "account number: {number}"
+                logging.info(message.format(number=Account.generate_number()))
+            elif line[0] in ["q", "e", "exit", "quit"]:
                 is_running = False
             else:
                 raise ValueError("Unknown command '{command}'".format(command=line[0]))
@@ -199,7 +209,7 @@ if __name__ == "__main__":
         prog="Bank Accounts Manager", description="Does what the name says"
     )
     parser.add_argument("mode", choices=["interactive", "demo", "generator"])
-    parser.add_argument("filename", nargs="*")
+    # parser.add_argument("filename", nargs="*")
     args = parser.parse_args()
     if args.mode == "demo":
         demo()
