@@ -3,7 +3,7 @@
 # show a lot of usecases - show many times that it works
 # use thread or multiprocessing or asyncio
 
-# I don't have a good use for async
+# I couldn't find a good use for async
 # Using it for file loading makes code a spaghetti
 # import asyncio
 
@@ -113,9 +113,12 @@ class Bank:
         is_number_taken = True
         while is_number_taken:
             account_number = Account.generate_number()
-            if account_address not in self._accounts.keys():
+            if account_number not in self._accounts.keys():
                 is_number_taken = False
-        self._accounts[account_address] = account
+        self._accounts[account_number] = account
+        self._logger.info("Account with {number} number crated".format(number=account_number))
+        return account_number
+
 
     def transfer_money(self, sender_number: str, recipient_number: str, amount: float):
         if sender_number not in self._accounts.keys():
@@ -138,7 +141,17 @@ class Bank:
 def demo():
     logging.basicConfig(level=logging.DEBUG)
     demo_bank = Bank.from_file("demo.json")
-    demo_bank.to_file("demo_output.json")
+    second_bank = Bank("Pekao")
+    john_doe_account = second_bank.create_account("John", "Doe")
+    abc_xyz_account = second_bank.create_account("Abc", "Xyz")
+    second_bank.get_account(john_doe_account).input(10)
+    second_bank.get_account(abc_xyz_account).input(420.01)
+    second_bank.get_account(abc_xyz_account).withdraw(20.01)
+    second_bank.log_all_accounts()
+    demo_bank.transfer_money("51956445405539334529285918", "64278787073145255302999030", 21.37)
+    demo_bank.log_all_accounts()
+    demo_bank.to_file("demo_output1.json")
+    second_bank.to_file("demo_output2.json")
 
 
 def interactive():
@@ -159,6 +172,10 @@ def interactive():
             elif line[0] in ["w", "withdraw"]:
                 check_bank_instance()
                 bank.get_account(line[1]).withdraw(float(line[2]))
+            elif line[0] in ["n", "new"]:
+                bank = Bank(line[1])
+            elif line[0] in ["c", "create"]:
+                bank.create_account(line[1], line[2])
             elif line[0] in ["l", "load"]:
                 bank = Bank.from_file(line[1])
             elif line[0] in ["s", "save"]:
@@ -167,6 +184,8 @@ def interactive():
             elif line[0] in ["p", "print"]:
                 check_bank_instance()
                 bank.log_all_accounts()
+            elif line[0] in ["g", "generate"]:
+                print(Account.generate_number())
             elif line[0] in ["q", "exit", "quit"]:
                 is_running = False
             else:
