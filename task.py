@@ -145,17 +145,22 @@ class Bank:
 async def demo():
     logging.basicConfig(level=logging.DEBUG)
     try:
-        logging.debug("Loading corrupted file")
+        logging.warning("Loading corrupted file")
         demo_bank = await Bank.from_file("demo_wrong.json")
     except Exception as e:
         logging.error(e)
-    logging.debug("Loading proper file")
+    logging.warning("Loading proper file")
     demo_bank = await Bank.from_file("demo.json")
-    logging.debug("Creating a new bank")
+    logging.warning("Creating a new bank")
     second_bank = Bank("Pekao")
     john_doe_account = second_bank.create_account("John", "Doe")
     abc_xyz_account = second_bank.create_account("Abc", "Xyz")
     second_bank.get_account(john_doe_account).input(10)
+    try:
+        logging.warning("Withdrawing wrong amount")
+        second_bank.get_account(john_doe_account).withdraw(10.01)
+    except Exception as e:
+        logging.error(e)
     second_bank.get_account(abc_xyz_account).input(420.01)
     second_bank.get_account(abc_xyz_account).withdraw(20.01)
     second_bank.log_all()
