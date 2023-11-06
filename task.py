@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-# I couldn't find a good use for async
-# import asyncio
-
 from argparse import ArgumentParser
 from random import choice
 from string import digits
+import asyncio
 import json
 import logging
 
@@ -43,7 +41,7 @@ class Account:
         self._balance = balance
 
     @classmethod
-    def from_dict(cls, dictionary):
+    async def from_dict(cls, dictionary):
         # unsafe variant
         # return cls(*dictionary.values())
         return cls(
@@ -76,19 +74,26 @@ class Bank:
         self._name = name
         self._accounts = accounts
 
+    @staticmethod
+    async def _load_item(number: str, item, target_dict):
+        if not number.isnumeric() or len(number) != 26:
+            raise ValueError("wrong account number: {number}".format(number=number))
+        target_dict[number] = await Account.from_dict(item)
+
     @classmethod
-    def from_dict(cls, dictionary):
+    async def from_dict(cls, dictionary):
         accounts = {}
-        for key in dictionary["accounts"].keys():
-            if not key.isnumeric() or len(key) != 26:
-                raise ValueError("wrong account number: {number}".format(number=key))
-            accounts[key] = Account.from_dict(dictionary["accounts"][key])
+        tasks = [
+            asyncio.create_task(cls._load_item(key, dictionary["accounts"][key], accounts))
+            for key in dictionary["accounts"].keys()
+        ]
+        await asyncio.gather(*tasks)
         return cls(dictionary["name"], accounts)
 
     @classmethod
-    def from_file(cls, filepath: str):
+    async def from_file(cls, filepath: str):
         with open(filepath, "r") as file:
-            return cls.from_dict(json.loads(file.read()))
+            return await cls.from_dict(json.loads(file.read()))
 
     def to_dict(self):
         dictionary = {"name": self._name, "accounts": {}}
@@ -113,7 +118,7 @@ class Bank:
                 is_number_taken = False
         self._accounts[account_number] = account
         self._logger.info(
-            "Account with {number} number crated".format(number=account_number)
+            "Account with {number} number created".format(number=account_number)
         )
         return account_number
 
@@ -137,29 +142,32 @@ class Bank:
         return self._accounts[number]
 
 
-def demo():
+async def demo():
     logging.basicConfig(level=logging.DEBUG)
     try:
-        demo_bank = Bank.from_file("demo_wrong.json")
+        logging.debug("Loading corrupted file")
+        demo_bank = await Bank.from_file("demo_wrong.json")
     except Exception as e:
         logging.error(e)
-    demo_bank = Bank.from_file("demo.json")
+    logging.debug("Loading proper file")
+    demo_bank = await Bank.from_file("demo.json")
+    logging.debug("Creating a new bank")
     second_bank = Bank("Pekao")
     john_doe_account = second_bank.create_account("John", "Doe")
     abc_xyz_account = second_bank.create_account("Abc", "Xyz")
     second_bank.get_account(john_doe_account).input(10)
     second_bank.get_account(abc_xyz_account).input(420.01)
     second_bank.get_account(abc_xyz_account).withdraw(20.01)
-    second_bank.log_all_accounts()
+    second_bank.log_all()
     demo_bank.transfer_money(
         "51956445405539334529285918", "64278787073145255302999030", 21.37
     )
-    demo_bank.log_all_accounts()
+    demo_bank.log_all()
     demo_bank.to_file("demo_output1.json")
     second_bank.to_file("demo_output2.json")
 
 
-def interactive():
+async def interactive():
     logging.basicConfig(level=logging.INFO)
     bank = None
 
@@ -171,6 +179,7 @@ def interactive():
     while is_running:
         line = input("> ").split()
         try:
+            # I have python 3.9, so no match/case available yet
             if line[0] in ["i", "input"]:
                 check_bank_instance()
                 bank.get_account(line[1]).input(float(line[2]))
@@ -186,7 +195,7 @@ def interactive():
                 check_bank_instance()
                 bank.create_account(line[1], line[2])
             elif line[0] in ["l", "load"]:
-                bank = Bank.from_file(line[1])
+                bank = await Bank.from_file(line[1])
             elif line[0] in ["s", "save"]:
                 check_bank_instance()
                 bank.to_file(line[1])
@@ -209,12 +218,11 @@ if __name__ == "__main__":
         prog="Bank Accounts Manager", description="Does what the name says"
     )
     parser.add_argument("mode", choices=["interactive", "demo", "generator"])
-    # parser.add_argument("filename", nargs="*")
     args = parser.parse_args()
     if args.mode == "demo":
-        demo()
+        asyncio.run(demo())
     elif args.mode == "interactive":
-        interactive()
+        asyncio.run(interactive())
     elif args.mode == "generator":
         # CLI element, so I use print instead of logging here
         print(Account.generate_number())
